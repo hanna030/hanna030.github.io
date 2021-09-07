@@ -134,7 +134,7 @@ response 객체는 WritableStream이므로 클라이언트로 보내는 응답 �
 <code>
 response.write('<html>');
 response.write('<body>');
-response.write('<h1>Hello, World!</h1>');
+response.write('<h5>Hello, World!</h5>');
 response.write('</body>');
 response.write('</html>');
 response.end();
@@ -142,7 +142,7 @@ response.end();
 </code>
 스트림의 end 함수에 스트림에 보낼 데이터의 마지막 비트를 선택적으로 전달할 수 있으므로 위의 예제는 다음과 같이 간단하게 작성할 수 있습니다.
 
-response.end('<html><body><h1>Hello, World!</h1></body></html>');
+response.end('<html><body><h5>Hello, World!</h5></body></html>');
 주의: 바디에 데이터 청크를 작성하기 전에 상태 코드와 헤더를 설정해야 합니다. HTTP 응답에서 바디 전에 헤더가 있으므로 이는 이치에 맞습니다.
 
 오류에 대한 추가 설명
