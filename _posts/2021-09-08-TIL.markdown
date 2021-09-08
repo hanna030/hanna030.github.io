@@ -1,0 +1,102 @@
+---
+layout: post
+title: how to debug node app
+date: 2021-09-08 17:16:55 +0300
+image: /assets/images/blog/post-5.jpg
+author: hanna
+tags: frontend
+---
+
+## how to debug node app
+
+디버딩 가이드 hteep://nodejs.org
+
+크롬 브라우저 > console 크롬 브라우저를 열면 아이콘이 생겨있음.
+
+command-line을 보고 pakage.com 에서 script start를 수정해줌
+
+## Js 엔진
+
+자바스크립트 엔진은 Memory Heap 과 Call Stack 으로 구성되어 있다. 자바스크립트는 단일 스레드 (sigle thread) 프로그래밍 언어인데,
+이 의미는 Call Stack이 하나 라는 이야기이다.
+
+- Memory Heap : 메모리 할당이 일어나는 곳
+  (ex, 우리가 프로그램에 선언한 변수, 함수 등이 담겨져 있음)
+- Call Stack : 코드가 실행될 때 쌓이는 곳. stack 형태로 쌓임.
+
+  - Stack(스택) : 자료구조 중 하나, 선입후출(LIFO, Last In First Out)의 룰을 따른다.
+
+  ## web API
+
+  Web API 는 브라우저에서 제공하는 API 로, DOM, Ajax, Timeout 등이 있다.
+  Call Stack에서 실행된 비동기 함수는 Web API를 호출하고,
+  Web API는 콜백함수를 Callback Queue에 밀어 넣는다.
+  자바스크립트 엔진에 포함 되지 않는다.
+
+## Callback Queue
+
+비동기적으로 실행된 콜백함수가 보관 되는 영역이다.
+예를 들어 setTimeout에서 타이머 완료 후 실행되는 함수(1st 인자),
+addEventListener에서 click 이벤트가 발생했을 때 실행되는 함수(2nd 인자) 등이 보관된다.
+
+Queue(큐) : 자료 구조 중 하나, 선입선출(FIFO, Frist In Frist OUT)의 룰을 따른다.
+
+## 이벤트 루프
+
+구동 환경이 단일 호출 스택을 사용하는 자바 스크립트 엔진과 상호 연동하기 위해 사용하는 장치가 바로 '이벤트 루프'
+Event Loop는 Call Stack과 Callback Queue의 상태를 체크하여,
+Call Stack이 빈 상태가 되면, Callback Queue의 첫번째 콜백을 Call Stack으로 밀어넣는다.
+이러한 반복적인 행동을 틱(tick) 이라 부른다.
+
+## 구현 순서
+
+<code>
+<pre>
+setTimeout(function exec() {
+  console.log('second')
+}, 1000);
+</code>
+</pre>
+
+1. Web APIs: setTimeout이 Call Stack에 들어와 실행되면 Browser API인 timer를 호출한다.
+2. Event Table: 특정 event(timeout, click, mouse move 등등)가 발생했을 때 어떤 callback 함수가 호출되야 하는지를 알고 있는 자료구조이다. 위 코드에서 호출된 timer가 종료되면 event가 발생하게 되는데 이때 exec callback 함수가 실행되어야 한다는 것을 Event Table이 알고있다.
+3. Callback Queue: 이벤트 발생 시 실행해야 할 callback 함수가 Callback Queue에 추가된다.
+4. Event Loop
+
+- 1. Call Stack과 Callback Queue를 감시한다.
+- 2. Call Stack이 비어있을 경우, Callback queue에서 함수를 꺼내 Call Stack에 추가 한다.
+
+<code>
+<pre>
+console.log('first')
+
+setTimeout(function cb() {
+console.log('second')
+}, 1000); // 0ms 뒤 실행
+
+console.log('third')
+</code>
+
+</pre>
+
+1.console.log(‘first’)가 Call Stack에 추가(push) 된다.
+
+2. console.log(‘first’)가 실행되어 화면에 출력한 뒤, Call Stack에서 제거(pop) 된다.
+
+3. 3.setTimeout(function cb() {..}) 이 Call Stack에 추가된다.
+
+4. setTimeout 함수가 실행되면서 Browser가 제공하는 timer Web API 를 호출하고 그 후 Call Stack에서 제거되낟.
+
+5. console.log(‘third’)가 Call Stack에 추가된다.
+
+6. console.log(‘third’)가 실행되어 화면에 출력되고 Call Stack에서 제거된다.
+
+7. setTimeout 함수에 전달한 0ms 시간이 지난뒤 Callback으로 전달한 cb 함수가 Callback Queue에 추가된다.
+
+8. Event Loop는 Call Stack이 비어있는 것을 확인하고 Callback Queue를 살펴보고 cb를 발견한 Event Loop는 Call Stack에 cb를 추가한다.
+
+9. cb 함수가 실행 되고 내부의 console.log(‘second’)가 Call Stack에 추가되낟.
+
+10. console.log(‘second’)가 화면에 출력되고 Call Stack에서 제거된다.
+
+11. cb가 Call Stack에서 제거된다.
